@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐾 PetMood Admin Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/date-fns/2.29.3/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --secondary: #7c3aed;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --dark: #1f2937;
+            --light: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .header {
+            background: var(--gradient);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .admin-info {
+            text-align: right;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 2rem 0;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            margin-top: 0.5rem;
+            display: inline-block;
+        }
+
+        .stat-change.positive {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stat-change.negative {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .chart-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .data-tables {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .table-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .search-box {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+            width: 250px;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table th {
+            background: var(--light);
+            font-weight: 600;
+            color: var(--text-primary);
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table tr:hover {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-info {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--info);
+        }
+
+        .confidence-bar {
+            width: 100px;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: var(--gradient);
+            transition: width 0.3s ease;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .spectrogram-container {
+            background: var(--dark);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            position: relative;
+            height: 200px;
+            overflow: hidden;
+        }
+
+        .spectrogram-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-tab {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--border);
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .filter-tab:hover:not(.active) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .bulk-delete-btn, .danger-btn, .delete-btn, .delete-user-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .bulk-delete-btn {
+            background: var(--warning);
+            color: white;
+        }
+
+        .bulk-delete-btn:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+        }
+
+        .bulk-delete-btn.active {
+            background: var(--danger);
+        }
+
+        .danger-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .danger-btn:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .delete-btn, .delete-user-btn {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .delete-btn:hover, .delete-user-btn:hover {
+            background: var(--danger);
+            color: white;
+        }
+
+        .bulk-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--danger);
+        }
+
+        .selected-row {
+            background: rgba(239, 68, 68, 0.1) !important;
+        }
+
+        .bulk-actions-bar {
+            background: var(--danger);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .bulk-actions-bar.active {
+            display: flex;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .modal-text {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.primary {
+            background: var(--danger);
+            color: white;
+        }
+
+        .modal-btn.primary:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .modal-btn.secondary {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        .modal-btn.secondary:hover {
+            background: #d1d5db;
+        }
+
+        .delete-animation {
+            animation: slideOut 0.3s ease-out forwards;
+        }
+
+        @keyframes slideOut {
+            to {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .chart-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                text-align: center;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+            
+            .data-table {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1 class="header-title">🐾 PetMood Admin Dashboard</h1>
+                    <p class="header-subtitle">Real-time Analytics & Model Performance Monitoring</p>
+                </div>
+                <div class="admin-info">
+                    <div>👤 Admin Portal</div>
+                    <div id="lastUpdate">Last Updated: Loading...</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <!-- Statistics Cards -->
+            <div class="dashboard-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">📊</div>
+                    </div>
+                    <div class="stat-value" id="totalImages">0</div>
+                    <div class="stat-label">Training Images</div>
+                    <div class="stat-change positive" id="imagesChange">+0 this week</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">🎵</div>
+                    </div>
+                    <div class="stat-value" id="totalAudios">0</div>
+                    <div class="stat-label">Training Audio Files</div>
+                    <div class="stat-change positive" id="audiosChange">+0 this week</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">👥</div>
+                    </div>
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">Active Users</div>
+                    <div class="stat-change positive" id="usersChange">+0 this week</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">🎯</div>
+                    </div>
+                    <div class="stat-value" id="avgAccuracy">0%</div>
+                    <div class="stat-label">Average Accuracy</div>
+                    <div class="stat-change positive" id="accuracyChange">+0% this week</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">📁</div>
+                    </div>
+                    <div class="stat-value" id="totalUploads">0</div>
+                    <div class="stat-label">Total Uploads</div>
+                    <div class="stat-change positive" id="uploadsChange">+0 today</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon">⚡</div>
+                    </div>
+                    <div class="stat-value" id="avgConfidence">0%</div>
+                    <div class="stat-label">Avg Confidence Score</div>
+                    <div class="stat-change positive" id="confidenceChange">+0% this week</div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="chart-section">
+                <div class="chart-card">
+                    <h3 class="chart-title">📈 Model Performance Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3 class="chart-title">🎵 Audio Spectrogram Analysis</h3>
+                    <div class="chart-container">
+                        <canvas id="spectrogramChart"></canvas>
+                    </div>
+                    <div class="spectrogram-container">
+                        <canvas id="spectrogramDisplay" class="spectrogram-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+         <!-- Data Tables -->
+<div class="data-tables">
+    <!-- Upload History -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3 class="table-title">📁 Upload History</h3>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <input type="text" class="search-box" id="uploadSearch" placeholder="🔍 Search uploads...">
+                <div class="bulk-actions" style="display: flex; gap: 0.5rem;">
+                    <button class="bulk-delete-btn" onclick="toggleBulkDelete()" title="Toggle bulk delete mode">
+                        <span id="bulkDeleteIcon">☑️</span> Bulk Delete
+                    </button>
+                    <button class="danger-btn" onclick="showDeleteAllModal()" title="Delete all records">
+                        🗑️ Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All Uploads</button>
+            <button class="filter-tab" data-filter="images">Images Only</button>
+            <button class="filter-tab" data-filter="videos">Videos Only</button>
+            <button class="filter-tab" data-filter="today">Today</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>📅 Date/Time</th>
+                        <th>📁 Filename</th>
+                        <th>🐾 Animal</th>
+                        <th>😊 Emotion</th>
+                        <th>🎯 Animal Confidence</th>
+                        <th>🎭 Emotion Confidence</th>
+                        <th>📊 Status</th>
+                        <th>🗑️ Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="uploadHistoryTable">
+                    <tr>
+                        <td colspan="8" class="loading">
+                            <div class="loading-spinner"></div>
+                            Loading upload history...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- User Analytics -->
+    <div class="table-card">
+        <div class="table-header">
+            <h3 class="table-title">👥 User Analytics</h3>
+            <input type="text" class="search-box" id="userSearch" placeholder="🔍 Search users...">
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Total Uploads</th>
+                        <th>Images</th>
+                        <th>Videos</th>
+                        <th>First Upload</th>
+                        <th>Last Upload</th>
+                        <th>Average Accuracy</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userAnalyticsTable">
+                    <tr>
+                        <td colspan="8" class="loading">
+                            <div class="loading-spinner"></div>
+                            Loading user analytics...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</main>
+    <script>
+        // Global variables
+        let uploadData = [];
+        let userData = [];
+        let performanceChart = null;
+        let spectrogramChart = null;
+        let bulkDeleteMode = false;
+        let selectedRecords = new Set();
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initalizeDashboard();
+            setupEventListeners();
+            loadDashboardData();
+        });
+
+        function initalizeDashboard() {
+            updateLastUpdateTime();
+            setInterval(updateLastUpdateTime, 60000); // Update every minute
+        }
+
+        function updateLastUpdateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = 
+                `Last Updated: ${now.toLocaleString()}`;
+        }
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('uploadSearch').addEventListener('input', filterUploadTable);
+            document.getElementById('userSearch').addEventListener('input', filterUserTable);
+
+            // Filter tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    filterUploadTable();
+                });
+            });
+        }
+
+        async function loadDashboardData() {
+            try {
+                // Simulate loading data (replace with actual Firebase calls)
+                await simulateDataLoading();
+                
+                // Update statistics
+                updateStatistics();
+                
+                // Load tables
+                loadUploadHistory();
+                loadUserAnalytics();
+                
+                // Create charts
+                createPerformanceChart();
+                createSpectrogramChart();
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showErrorState();
+            }
+        }
+
+        async function simulateDataLoading() {
+            // Simulate API calls - replace with actual Firebase queries
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    
+                    resolve();
+                }, 1000);
+            });
+        }
+
+
+firebase.firestore().collection("detections")
+  .orderBy("timestamp", "desc")
+  .limit(100)
+  .onSnapshot(snapshot => {
+    uploadData = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+
+      uploadData.push({
+  id: doc.id,
+  timestamp: data.timestamp?.toDate?.() || new Date(),
+  filename: data.video_file || data.audio_file || "N/A",
+  animal: data.animal || "unknown",
+  emotion: data.emotion || "unknown",
+  confidence_animal: data.confidence_animal || 0,
+  confidence_emotion: data.confidence_emotion || 0,
+  accuracy: data.accuracy || 0,
+  loss: data.loss || 0,
+  type: data.video_file ? "video" : "image"
+});
+
+    });
+
+    computeUserAnalytics();
+    updateStatistics();
+    loadUploadHistory();
+    loadUserAnalytics();
+  });
+function computeUserAnalytics() {
+    const stats = {
+        totalUploads: 0,
+        images: 0,
+        videos: 0,
+        accuracySum: 0,
+        firstUpload: null,
+        lastUpload: null
+    };
+
+    uploadData.forEach(entry => {
+        stats.totalUploads++;
+        if (entry.type === "image") stats.images++;
+        else if (entry.type === "video") stats.videos++;
+
+        stats.accuracySum += entry.accuracy || 0;
+
+        const timestamp = entry.timestamp;
+        if (!stats.firstUpload || timestamp < stats.firstUpload)
+            stats.firstUpload = timestamp;
+        if (!stats.lastUpload || timestamp > stats.lastUpload)
+            stats.lastUpload = timestamp;
+    });
+
+    // Assign one global entry for userData
+    userData = [{
+        totalUploads: stats.totalUploads,
+        images: stats.images,
+        videos: stats.videos,
+        firstUpload: stats.firstUpload,
+        lastUpload: stats.lastUpload,
+        avgAccuracy: stats.totalUploads > 0 ? stats.accuracySum / stats.totalUploads : 0,
+        status: "active"
+    }];
+
+    console.log("✅ Computed userData (global):", userData);
+}
+
+        function updateStatistics() {
+            const totalImages = uploadData.filter(u => u.type === 'image').length;
+            const totalAudios = uploadData.filter(u => u.type === 'video').length; // Videos contain audio
+            const totalUsers = userData.length;
+            const avgAccuracy = uploadData.reduce((sum, u) => sum + u.accuracy, 0) / uploadData.length;
+            const totalUploads = uploadData.length;
+            const avgConfidence = uploadData.reduce((sum, u) => sum + (u.confidence_animal + u.confidence_emotion) / 2, 0) / uploadData.length;
+
+            // Update statistics cards
+            document.getElementById('totalImages').textContent = totalImages.toLocaleString();
+            document.getElementById('totalAudios').textContent = totalAudios.toLocaleString();
+            document.getElementById('totalUsers').textContent = totalUsers.toLocaleString();
+            document.getElementById('avgAccuracy').textContent = (avgAccuracy * 100).toFixed(1) + '%';
+            document.getElementById('totalUploads').textContent = totalUploads.toLocaleString();
+            document.getElementById('avgConfidence').textContent = (avgConfidence * 100).toFixed(1) + '%';
+
+            // Update change indicators (mock data)
+            document.getElementById('imagesChange').textContent = '+' + Math.floor(Math.random() * 20) + ' this week';
+            document.getElementById('audiosChange').textContent = '+' + Math.floor(Math.random() * 15) + ' this week';
+            document.getElementById('usersChange').textContent = '+' + Math.floor(Math.random() * 5) + ' this week';
+            document.getElementById('accuracyChange').textContent = '+' + (Math.random() * 2).toFixed(1) + '% this week';
+            document.getElementById('uploadsChange').textContent = '+' + Math.floor(Math.random() * 10) + ' today';
+            document.getElementById('confidenceChange').textContent = '+' + (Math.random() * 3).toFixed(1) + '% this week';
+        }
+
+        function loadUploadHistory() {
+            const tableBody = document.getElementById('uploadHistoryTable');
+            tableBody.innerHTML = '';
+
+            uploadData.forEach((upload, index) => {
+                const row = document.createElement('tr');
+                row.dataset.uploadId = upload.id;
+                row.innerHTML = `
+                    ${bulkDeleteMode ? `<td><input type="checkbox" class="bulk-checkbox" data-id="${upload.id}" onchange="toggleRecordSelection('${upload.id}', this.checked)"></td>` : ''}
+                    <td>${upload.timestamp.toLocaleString()}</td>
+                    <td>${upload.filename}</td>
+                    <td>${upload.animal.charAt(0).toUpperCase() + upload.animal.slice(1)}</td>
+                    <td>${upload.emotion.charAt(0).toUpperCase() + upload.emotion.slice(1)}</td>
+                    <td>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${upload.confidence_animal * 100}%"></div>
+                        </div>
+                        ${(upload.confidence_animal * 100).toFixed(1)}%
+                    </td>
+                    <td>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${upload.confidence_emotion * 100}%"></div>
+                        </div>
+                        ${(upload.confidence_emotion * 100).toFixed(1)}%
+                    </td>
+                    <td><span class="status-badge status-success">Success</span></td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteRecord('${upload.id}')" title="Delete this record">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Update bulk actions bar
+            updateBulkActionsBar();
+        }
+
+      function loadUserAnalytics() {
+    const tableBody = document.getElementById('userAnalyticsTable');
+    tableBody.innerHTML = '';
+
+    if (!userData || userData.length === 0) {
+        console.warn("⚠️ No userData available to display.");
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="8" style="text-align:center;">No user data available</td>`;
+        tableBody.appendChild(row);
+        return;
+    }
+
+    const user = userData[0]; // only one entry for global stats
+
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>${user.totalUploads}</td>
+        <td>${user.images}</td>
+        <td>${user.videos}</td>
+        <td>${user.firstUpload ? new Date(user.firstUpload).toLocaleDateString() : '—'}</td>
+        <td>${user.lastUpload ? new Date(user.lastUpload).toLocaleDateString() : '—'}</td>
+        <td>${(user.avgAccuracy * 100).toFixed(1)}%</td>
+        <td><span class="status-badge status-success">${user.status || 'active'}</span></td>
+        <td>
+            <button class="delete-user-btn" onclick="deleteAllData()" title="Delete all uploads">
+                🗑️ Delete All
+            </button>
+        </td>
+    `;
+    tableBody.appendChild(row);
+}
+
+        function createPerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            // Generate time series data for last 30 days
+            const days = [];
+            const accuracyData = [];
+            const lossData = [];
+            
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                days.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                
+                // Simulate trending data
+                accuracyData.push(75 + Math.random() * 20 + (29 - i) * 0.3); // Improving trend
+                lossData.push(0.8 - (29 - i) * 0.02 + Math.random() * 0.2); // Decreasing trend
+            }
+
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: days,
+                    datasets: [
+                        {
+                            label: 'Accuracy (%)',
+                            data: accuracyData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Loss',
+                            data: lossData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { display: true, text: 'Accuracy (%)' },
+                            min: 0,
+                            max: 100
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { display: true, text: 'Loss' },
+                            min: 0,
+                            max: 1,
+                            grid: {
+                                drawOnChartArea: false,
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createSpectrogramChart() {
+            const ctx = document.getElementById('spectrogramChart').getContext('2d');
+            
+            // Create a mock frequency analysis chart
+            const frequencies = ['0-1kHz', '1-2kHz', '2-3kHz', '3-4kHz', '4-5kHz', '5-6kHz', '6-7kHz', '7-8kHz'];
+            
+            
+            const datasets = emotions.map((emotion, index) => ({
+                label: emotion,
+                data: frequencies.map(() => Math.random() * 100),
+                borderColor: `hsl(${index * 90}, 70%, 50%)`,
+                backgroundColor: `hsla(${index * 90}, 70%, 50%, 0.2)`,
+                tension: 0.4
+            }));
+
+            spectrogramChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: frequencies,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Frequency Intensity'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Create spectrogram visualization
+            createSpectrogramDisplay();
+        }
+
+        function createSpectrogramDisplay() {
+            const canvas = document.getElementById('spectrogramDisplay');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Create mock spectrogram data
+            const width = canvas.width;
+            const height = canvas.height;
+            const imageData = ctx.createImageData(width, height);
+            
+            // Generate colorful spectrogram pattern
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    const index = (y * width + x) * 4;
+                    
+                    // Create frequency-based color pattern
+                    const freq = y / height;
+                    const time = x / width;
+                    const intensity = Math.sin(freq * 20 + time * 10) * 0.5 + 0.5;
+                    
+                    // Color mapping for spectrogram
+                    const r = Math.floor(intensity * 255 * (1 - freq));
+                    const g = Math.floor(intensity * 255 * freq);
+                    const b = Math.floor(intensity * 128);
+                    
+                    imageData.data[index] = r;     // Red
+                    imageData.data[index + 1] = g; // Green
+                    imageData.data[index + 2] = b; // Blue
+                    imageData.data[index + 3] = 255; // Alpha
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Add frequency labels
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.font = '12px Arial';
+            ctx.fillText('High Freq', 10, 20);
+            ctx.fillText('Low Freq', 10, height - 10);
+            ctx.fillText('Time →', width - 60, height - 10);
+        }
+
+        function filterUploadTable() {
+            const searchTerm = document.getElementById('uploadSearch').value.toLowerCase();
+            const activeFilter = document.querySelector('.filter-tab.active').dataset.filter;
+            const rows = document.querySelectorAll('#uploadHistoryTable tr');
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length === 0) return; // Skip header row
+                
+                const filename = cells[2].textContent.toLowerCase();
+                const animal = cells[3].textContent.toLowerCase();
+                const emotion = cells[4].textContent.toLowerCase();
+                const date = new Date(cells[0].textContent);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                // Search filter
+                const matchesSearch =  
+                                    filename.includes(searchTerm) || 
+                                    animal.includes(searchTerm) || 
+                                    emotion.includes(searchTerm);
+                
+                // Type filter
+                let matchesType = true;
+                if (activeFilter === 'images') {
+                    matchesType = filename.includes('.jpg') || filename.includes('.png');
+                } else if (activeFilter === 'videos') {
+                    matchesType = filename.includes('.mp4') || filename.includes('.avi');
+                } else if (activeFilter === 'today') {
+                    matchesType = date >= today;
+                }
+                
+                row.style.display = (matchesSearch && matchesType) ? '' : 'none';
+            });
+        }
+
+        function filterUserTable() {
+    const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+    const rows = document.querySelectorAll('#userAnalyticsTable tr');
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length === 0) return; // Skip header row
+        
+        const rowText = row.textContent.toLowerCase();
+        const matchesSearch = rowText.includes(searchTerm);
+        
+        row.style.display = matchesSearch ? '' : 'none';
+    });
+}
+
+        function showErrorState() {
+            document.getElementById('uploadHistoryTable').innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: #ef4444;">
+                        ❌ Error loading data. Please refresh the page or contact support.
+                    </td>
+                </tr>
+            `;
+            
+            document.getElementById('userAnalyticsTable').innerHTML = `
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: #ef4444;">
+                        ❌ Error loading user data. Please refresh the page or contact support.
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Real-time updates (simulate)
+       // Real-time Firestore updates
+firebase.firestore().collection("detections")
+  .orderBy("timestamp", "desc")
+  .limit(100)
+  .onSnapshot(snapshot => {
+    uploadData = []; // Clear old array to refresh
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      uploadData.push({
+        id: doc.id,
+        timestamp: d.timestamp?.toDate?.() || new Date(),  // Use actual Firestore timestamp
+        filename: d.video_file || d.audio_file || "N/A",
+        animal: d.animal,
+        emotion: d.emotion,
+        confidence_animal: d.confidence_animal,
+        confidence_emotion: d.confidence_emotion,
+        accuracy: d.accuracy,
+        loss: d.loss,
+        type: d.video_file ? "video" : "image"
+      });
+      console.log("✅ Fetched uploadData from Firebase:", uploadData);
+if (uploadData.length === 0) {
+    console.warn("⚠️ No uploads found in Firebase.");
+}
+
+    });
+   
+
+
+    // Update UI
+    updateStatistics();
+    loadUploadHistory();
+    showNotification('📊 New upload detected!', 'success');
+  });
+
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#10b981' : '#2563eb'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                z-index: 1000;
+                font-weight: 500;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+            }, 100);
+            
+            // Remove after delay
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Export functionality
+        function exportData(type) {
+    const data = type === 'uploads' ? uploadData : userData;
+    const filename = `petmood_${type}_${new Date().toISOString().split('T')[0]}.csv`;
+
+    let csv = '';
+
+    if (type === 'uploads') {
+        // ✅ Remove User/Email field
+        csv = 'Date,Filename,Animal,Emotion,Animal_Confidence,Emotion_Confidence,Accuracy,Loss\n';
+        data.forEach(row => {
+            csv += `${row.timestamp.toISOString()},${row.filename},${row.animal},${row.emotion},${row.confidence_animal},${row.confidence_emotion},${row.accuracy},${row.loss}\n`;
+        });
+    } else {
+        // ✅ Remove Email column — just export global stats
+        csv = 'Total_Uploads,Images,Videos,First_Upload,Last_Upload,Avg_Accuracy\n';
+        data.forEach(row => {
+            csv += `${row.totalUploads},${row.images},${row.videos},${new Date(row.firstUpload).toISOString()},${new Date(row.lastUpload).toISOString()},${row.avgAccuracy}\n`;
+        });
+    }
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showNotification(`📁 ${filename} exported successfully!`, 'success');
+        }
+
+        // Add export buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadHeader = document.querySelector('.table-card .table-header');
+            const exportBtn = document.createElement('button');
+            exportBtn.textContent = '📊 Export CSV';
+            exportBtn.style.cssText = `
+                background: var(--primary);
+                color: white;
+                border: none;
+                padding: 0.75rem 1.5rem;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 500;
+                margin-left: 1rem;
+            `;
+            exportBtn.onclick = () => exportData('uploads');
+            uploadHeader.appendChild(exportBtn);
+            
+            const userHeader = document.querySelectorAll('.table-card .table-header')[1];
+            const exportBtn2 = document.createElement('button');
+            exportBtn2.textContent = '📊 Export CSV';
+            exportBtn2.style.cssText = exportBtn.style.cssText;
+            exportBtn2.onclick = () => exportData('users');
+            userHeader.appendChild(exportBtn2);
+        });
+
+        // Advanced Analytics Modal
+        function showAdvancedAnalytics() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 2000;
+            `;
+            
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: white;
+                border-radius: 16px;
+                padding: 2rem;
+                max-width: 90vw;
+                max-height: 90vh;
+                overflow: auto;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            `;
+            
+            content.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <h2>📊 Advanced Analytics</h2>
+                    <button onclick="this.closest('.modal').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h3>🎯 Model Performance Breakdown</h3>
+                        <canvas id="modelBreakdownChart" width="300" height="200"></canvas>
+                    </div>
+                    
+                    <div>
+                        <h3>📈 Usage Trends</h3>
+                        <canvas id="usageTrendsChart" width="300" height="200"></canvas>
+                    </div>
+                    
+                    <div>
+                        <h3>🐾 Animal Distribution</h3>
+                        <canvas id="animalDistChart" width="300" height="200"></canvas>
+                    </div>
+                    
+                    <div>
+                        <h3>😊 Emotion Analysis</h3>
+                        <canvas id="emotionDistChart" width="300" height="200"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            modal.className = 'modal';
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+            
+            // Create additional charts
+            setTimeout(() => {
+                createAdvancedCharts();
+            }, 100);
+        }
+
+        function createAdvancedCharts() {
+            // Model Performance Breakdown
+            const ctx1 = document.getElementById('modelBreakdownChart')?.getContext('2d');
+            if (ctx1) {
+                new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['High Confidence', 'Medium Confidence', 'Low Confidence'],
+                        datasets: [{
+                            data: [65, 25, 10],
+                            backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+                        }]
+                    },
+                    options: { responsive: false }
+                });
+            }
+            
+            // Animal Distribution
+            const ctx3 = document.getElementById('animalDistChart')?.getContext('2d');
+            if (ctx3) {
+                const animalCounts = uploadData.reduce((acc, upload) => {
+                    acc[upload.animal] = (acc[upload.animal] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                new Chart(ctx3, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(animalCounts),
+                        datasets: [{
+                            data: Object.values(animalCounts),
+                            backgroundColor: ['#2563eb', '#7c3aed', '#10b981', '#f59e0b']
+                        }]
+                    },
+                    options: { responsive: false }
+                });
+            }
+            
+            // Emotion Distribution
+            const ctx4 = document.getElementById('emotionDistChart')?.getContext('2d');
+            if (ctx4) {
+                const emotionCounts = uploadData.reduce((acc, upload) => {
+                    acc[upload.emotion] = (acc[upload.emotion] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                new Chart(ctx4, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(emotionCounts),
+                        datasets: [{
+                            label: 'Count',
+                            data: Object.values(emotionCounts),
+                            backgroundColor: '#667eea'
+                        }]
+                    },
+                    options: { 
+                        responsive: false,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+        }
+
+        // Add advanced analytics button to header
+        document.addEventListener('DOMContentLoaded', function() {
+            const headerContent = document.querySelector('.header-content');
+            const advancedBtn = document.createElement('button');
+            advancedBtn.textContent = '📊 Advanced Analytics';
+            advancedBtn.style.cssText = `
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                padding: 0.75rem 1.5rem;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 500;
+                backdrop-filter: blur(10px);
+                transition: all 0.3s ease;
+            `;
+            advancedBtn.onclick = showAdvancedAnalytics;
+            advancedBtn.onmouseover = function() {
+                this.style.background = 'rgba(255, 255, 255, 0.3)';
+            };
+            advancedBtn.onmouseout = function() {
+                this.style.background = 'rgba(255, 255, 255, 0.2)';
+            };
+            
+            const adminInfo = document.querySelector('.admin-info');
+            adminInfo.parentNode.insertBefore(advancedBtn, adminInfo);
+        });
+
+        // Delete Functionality
+        function toggleBulkDelete() {
+            bulkDeleteMode = !bulkDeleteMode;
+            selectedRecords.clear();
+            
+            const icon = document.getElementById('bulkDeleteIcon');
+            const btn = document.querySelector('.bulk-delete-btn');
+            
+            if (bulkDeleteMode) {
+                icon.textContent = '✅';
+                btn.classList.add('active');
+                btn.textContent = '✅ Exit Bulk Mode';
+            } else {
+                icon.textContent = '☑️';
+                btn.classList.remove('active');
+                btn.textContent = '☑️ Bulk Delete';
+            }
+            
+            // Add bulk actions bar
+            addBulkActionsBar();
+            
+            // Reload table with checkboxes
+            loadUploadHistory();
+            
+            // Update table header
+            updateTableHeader();
+        }
+
+        function addBulkActionsBar() {
+            const existingBar = document.querySelector('.bulk-actions-bar');
+            if (existingBar) existingBar.remove();
+            
+            if (bulkDeleteMode) {
+                const bar = document.createElement('div');
+                bar.className = 'bulk-actions-bar';
+                bar.innerHTML = `
+                    <div>
+                        <span id="selectedCount">0</span> records selected
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="modal-btn secondary" onclick="selectAllRecords()">Select All</button>
+                        <button class="modal-btn secondary" onclick="clearSelection()">Clear Selection</button>
+                        <button class="modal-btn primary" onclick="deleteSelectedRecords()" disabled id="deleteSelectedBtn">
+                            🗑️ Delete Selected
+                        </button>
+                    </div>
+                `;
+                
+                const tableCard = document.querySelector('.table-card');
+                const filterTabs = document.querySelector('.filter-tabs');
+                filterTabs.parentNode.insertBefore(bar, filterTabs.nextSibling);
+            }
+        }
+
+        function updateTableHeader() {
+            const table = document.querySelector('.data-table');
+            const headerRow = table.querySelector('thead tr');
+            
+            if (bulkDeleteMode && !headerRow.querySelector('.bulk-header')) {
+                const checkboxHeader = document.createElement('th');
+                checkboxHeader.className = 'bulk-header';
+                checkboxHeader.innerHTML = '<input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)">';
+                headerRow.insertBefore(checkboxHeader, headerRow.firstChild);
+            } else if (!bulkDeleteMode) {
+                const bulkHeader = headerRow.querySelector('.bulk-header');
+                if (bulkHeader) bulkHeader.remove();
+            }
+        }
+
+        function toggleRecordSelection(id, isSelected) {
+            const row = document.querySelector(`tr[data-upload-id="${id}"]`);
+            
+            if (isSelected) {
+                selectedRecords.add(id);
+                row.classList.add('selected-row');
+            } else {
+                selectedRecords.delete(id);
+                row.classList.remove('selected-row');
+            }
+            
+            updateBulkActionsBar();
+        }
+
+        function updateBulkActionsBar() {
+            const bar = document.querySelector('.bulk-actions-bar');
+            if (!bar) return;
+            
+            const count = selectedRecords.size;
+            const countSpan = document.getElementById('selectedCount');
+            const deleteBtn = document.getElementById('deleteSelectedBtn');
+            const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+            
+            if (countSpan) countSpan.textContent = count;
+            if (deleteBtn) deleteBtn.disabled = count === 0;
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = count === uploadData.length && count > 0;
+                selectAllCheckbox.indeterminate = count > 0 && count < uploadData.length;
+            }
+            
+            bar.className = count > 0 ? 'bulk-actions-bar active' : 'bulk-actions-bar';
+        }
+
+        function toggleSelectAll(selectAll) {
+            const checkboxes = document.querySelectorAll('.bulk-checkbox');
+            selectedRecords.clear();
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll;
+                if (selectAll) {
+                    selectedRecords.add(checkbox.dataset.id);
+                    checkbox.closest('tr').classList.add('selected-row');
+                } else {
+                    checkbox.closest('tr').classList.remove('selected-row');
+                }
+            });
+            
+            updateBulkActionsBar();
+        }
+
+        function selectAllRecords() {
+            toggleSelectAll(true);
+        }
+
+        function clearSelection() {
+            toggleSelectAll(false);
+        }
+
+        function deleteRecord(id) {
+            showDeleteModal(
+                'Delete Record',
+                'Are you sure you want to delete this upload record? This action cannot be undone.',
+                () => {
+                    const index = uploadData.findIndex(upload => upload.id === id);
+                    if (index !== -1) {
+                        // Add animation
+                        const row = document.querySelector(`tr[data-upload-id="${id}"]`);
+                        if (row) {
+                            row.classList.add('delete-animation');
+                            setTimeout(() => {
+                                uploadData.splice(index, 1);
+                                updateStatistics();
+                                loadUploadHistory();
+                                userData = generateMockUserData(); // Regenerate user data
+                                loadUserAnalytics();
+                                showNotification('🗑️ Record deleted successfully', 'success');
+                            }, 300);
+                        }
+                    }
+                }
+            );
+        }
+
+        function deleteSelectedRecords() {
+            if (selectedRecords.size === 0) return;
+            
+            showDeleteModal(
+                'Delete Selected Records',
+                `Are you sure you want to delete ${selectedRecords.size} selected records? This action cannot be undone.`,
+                () => {
+                    // Animate out selected rows
+                    selectedRecords.forEach(id => {
+                        const row = document.querySelector(`tr[data-upload-id="${id}"]`);
+                        if (row) row.classList.add('delete-animation');
+                    });
+                    
+                    setTimeout(() => {
+                        // Remove from data
+                        uploadData = uploadData.filter(upload => !selectedRecords.has(upload.id));
+                        selectedRecords.clear();
+                        
+                        // Update displays
+                        updateStatistics();
+                        loadUploadHistory();
+                       computeUserAnalytics();
+                        loadUserAnalytics();
+                        
+                        showNotification('🗑️ Selected records deleted successfully', 'success');
+                    }, 300);
+                }
+            );
+        }
+
+        function deleteAllData() {
+    showDeleteModal(
+        'Delete All Data',
+        `Are you sure you want to delete all uploaded data? This action cannot be undone.`,
+        () => {
+            // Clear uploadData array
+            uploadData = [];
+
+            // Update dashboard views
+            updateStatistics();
+            loadUploadHistory();
+            computeUserAnalytics();
+            loadUserAnalytics();
+
+            showNotification('🗑️ All upload data deleted successfully.', 'success');
+        }
+    );
+}
+
+
+        function showDeleteAllModal() {
+            showDeleteModal(
+                'Clear All History',
+                `⚠️ WARNING: This will permanently delete ALL ${uploadData.length} upload records and user data. This action cannot be undone and will reset all statistics. Are you absolutely sure?`,
+                () => {
+                    // Clear all data
+                    uploadData = [];
+                    userData = [];
+                    selectedRecords.clear();
+                    
+                    // Update displays
+                    updateStatistics();
+                    loadUploadHistory();
+                    loadUserAnalytics();
+                    
+                    // Reset charts
+                    if (performanceChart) {
+                        performanceChart.destroy();
+                        createPerformanceChart();
+                    }
+                    
+                    showNotification('🗑️ All history cleared successfully', 'success');
+                },
+                true // Mark as dangerous action
+            );
+        }
+
+        function showDeleteModal(title, message, onConfirm, isDangerous = false) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3 class="modal-title">${isDangerous ? '⚠️ ' : '🗑️ '}${title}</h3>
+                    <p class="modal-text">${message}</p>
+                    <div class="modal-actions">
+                        <button class="modal-btn secondary" onclick="closeModal(this)">
+                            ❌ Cancel
+                        </button>
+                        <button class="modal-btn primary" onclick="confirmDelete(this)" ${isDangerous ? 'style="background: #dc2626;"' : ''}>
+                            ${isDangerous ? '⚠️ Yes, Delete Everything' : '🗑️ Yes, Delete'}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.onConfirm = onConfirm;
+            document.body.appendChild(modal);
+            
+            // Add click outside to close
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(modal);
+                }
+            });
+        }
+
+        function closeModal(element) {
+            const modal = element.closest('.modal-overlay');
+            if (modal) {
+                modal.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(modal);
+                }, 200);
+            }
+        }
+
+        function confirmDelete(element) {
+            const modal = element.closest('.modal-overlay');
+            if (modal && modal.onConfirm) {
+                modal.onConfirm();
+                closeModal(element);
+            }
+        }
+    </script>
+</body>
+</html>
